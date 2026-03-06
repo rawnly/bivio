@@ -942,7 +942,6 @@ dependencies = [
  "clap",
  "dirs",
  "frizbee",
- "fuzzy-matcher",
  "git2",
  "indoc",
  "inquire",

@@ -9,11 +9,10 @@ use anyhow::Result;
 use clap::Parser;
 use cli::{Cli, Command, ConfigAction};
 use config::Config;
-use fuzzy_matcher::skim::SkimMatcherV2;
-use fuzzy_matcher::FuzzyMatcher;
 use inquire::type_aliases::Scorer;
 use inquire::Select;
 use project::Project;
+use std::cell::RefCell;
 use std::path::PathBuf;
 use storage::Storage;
 
@@ -128,29 +127,16 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
         println!("use `spm list` to show broken projects")
     }
 
-    let fuzzy_matcher = SkimMatcherV2::default();
+    let matcher = RefCell::new(frizbee::Matcher::new("", &frizbee::Config::default()));
     let fuzzy_scorer: Scorer<Project> = &|input, item, _, _| {
-        // Split input into words and search for each word
-        let words: Vec<&str> = input.split_whitespace().collect();
-        let mut total_score = 0;
-        let mut matched_all = true;
-
-        for word in &words {
-            if let Some(score) = fuzzy_matcher.fuzzy_match(&item.name, word) {
-                total_score += score;
-            } else {
-                matched_all = false;
-                break;
-            }
+        if input.is_empty() {
+            return Some(0);
         }
 
-        if matched_all && !words.is_empty() {
-            Some(total_score)
-        } else if words.is_empty() {
-            Some(0) // No input, show all
-        } else {
-            None
-        }
+        let mut m = matcher.borrow_mut();
+        m.set_needle(input);
+        m.smith_waterman_one(item.name.as_bytes(), 0, true)
+            .map(|r| r.score as i64)
     };
 
     let prompt_project_selection = |projects: &[Project], q: Option<String>| {
