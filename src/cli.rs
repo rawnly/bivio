@@ -103,4 +103,7 @@ pub enum ConfigAction {
         /// Value to set
         value: String,
     },
+
+    /// Prints current configuration
+    View,
 }

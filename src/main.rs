@@ -283,6 +283,20 @@ fn cmd_tag(project_name: Option<String>, tags: Vec<String>, remove: bool) -> Res
 
 fn cmd_config(action: ConfigAction) -> Result<()> {
     match action {
+        ConfigAction::View => {
+            let config = Config::load()?;
+
+            let storage_path = Storage::path();
+            let config_path = Config::path();
+
+            println!("Config Path: {}", config_path.display());
+            println!("Storage Path: {}", storage_path.display());
+
+            println!();
+
+            let json = serde_json::to_string_pretty(&config)?;
+            println!("{json}");
+        }
         ConfigAction::Get { key } => {
             let config = Config::load()?;
             match config.get(&key) {

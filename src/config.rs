@@ -13,17 +13,9 @@ pub enum Shell {
     Fish,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub default_shell: Option<Shell>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            default_shell: None,
-        }
-    }
 }
 
 impl Config {
