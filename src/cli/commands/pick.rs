@@ -1,4 +1,4 @@
-use crate::{fuzzy_scorer, git, storage::Storage, Project};
+use crate::{fuzzy_scorer, git, git::Worktree, storage::Storage, Project};
 use anyhow::Result;
 use inquire::{
     ui::{RenderConfig, Styled},

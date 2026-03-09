@@ -1,4 +1,5 @@
 use crate::{fuzzy_scorer, storage::Storage, Project};
+use anyhow::Result;
 use inquire::{Confirm, Select};
 
 pub fn remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Result<()> {

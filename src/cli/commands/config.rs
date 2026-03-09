@@ -1,4 +1,5 @@
 use crate::{cli::ConfigAction, config::Config, storage::Storage};
+use anyhow::Result;
 
 pub fn config(action: ConfigAction) -> Result<()> {
     match action {
