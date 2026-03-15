@@ -6,6 +6,7 @@ use strum::EnumIter;
 pub mod commands;
 
 #[derive(Parser, Clone)]
+#[clap(version)]
 #[command(name = "bvo")]
 #[command(
     about = "Bivio - your project wayfinder",

@@ -18,7 +18,7 @@ pub fn generate_hook(shell: Shell) -> String {
     let binary_name = env!("CARGO_BIN_NAME");
     let mut commands: Vec<String> = cli::Command::iter().map(|c| c.to_string()).collect();
 
-    commands.push("-v".to_string());
+    commands.push("-V".to_string());
     commands.push("--version".to_string());
 
     commands.push("-h".to_string());
