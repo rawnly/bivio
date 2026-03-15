@@ -12,7 +12,6 @@ use clap::Parser;
 use cli::{Cli, Command};
 use project::Project;
 use storage::Storage;
-use strum::IntoEnumIterator;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -1,7 +1,6 @@
-use std::os;
 
 use crate::{cli, config::Shell};
-use indoc::{formatdoc, indoc};
+use indoc::formatdoc;
 use strum::IntoEnumIterator;
 
 pub fn detect_shell() -> Option<Shell> {
