@@ -8,9 +8,20 @@ use inquire::{
 pub fn pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     let mut storage = Storage::load()?;
 
+    let cwd = std::env::current_dir()?;
     let projects: Vec<Project> = match tags {
-        None => storage.list().into_iter().cloned().collect(),
-        Some(tags) => storage.list_filtered(&tags).into_iter().cloned().collect(),
+        None => storage
+            .list()
+            .into_iter()
+            .filter(|p| p.path != cwd)
+            .cloned()
+            .collect(),
+        Some(tags) => storage
+            .list_filtered(&tags)
+            .into_iter()
+            .filter(|p| p.path != cwd)
+            .cloned()
+            .collect(),
     };
 
     if projects.is_empty() {

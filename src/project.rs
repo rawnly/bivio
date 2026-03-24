@@ -41,6 +41,23 @@ impl Project {
         }
     }
 
+    pub fn to_list_item(&self) -> String {
+        let tags = if self.tags.is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", self.tags.join(", "))
+        };
+
+        let bare_indicator = if self.is_bare_repo { " (bare)" } else { "" };
+
+        format!(
+            "{name}{bare_indicator} — {path}{tags}",
+            name = self.name,
+            path = self.path.display(),
+            tags = tags
+        )
+    }
+
     pub fn on_access(&mut self) {
         self.last_opened_at = Utc::now();
         self.visits += 1;
@@ -70,10 +87,10 @@ impl Project {
     }
 
     pub fn exists(&self) -> bool {
-        self.path.try_exists().is_ok()
+        self.path.exists()
     }
 
-    fn frecency(&self) -> f64 {
+    pub fn frecency(&self) -> f64 {
         let now = Utc::now();
         let dx = (now - self.last_opened_at).as_seconds_f64();
         let rank = self.visits as f64 + 1.0;

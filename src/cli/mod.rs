@@ -43,6 +43,9 @@ pub enum Command {
 
         #[arg(long)]
         json: bool,
+
+        #[arg(short, long, default_value_t = 8)]
+        limit: usize,
     },
 
     /// Interactive picker with fuzzy search

@@ -1,15 +1,33 @@
-use crate::storage::Storage;
+use std::path::PathBuf;
+
+use crate::{project::Project, storage::Storage};
 use anyhow::Result;
 
-pub fn list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct JSONProject {
+    pub name: String,
+    pub path: PathBuf,
+
+    #[serde(default)]
+    pub tags: Vec<String>,
+
+    pub score: f64,
+
+    pub broken: bool,
+}
+
+pub fn list(tags: Option<Vec<String>>, limit: usize, json: bool) -> Result<()> {
     let storage = Storage::load()?;
     let tags = tags.unwrap_or_default();
     let projects = storage.list_filtered(&tags);
-    let json_projects = serde_json::to_string(&projects)?;
+
+    let cwd = std::env::current_dir()?;
+
+    let projects: Vec<&Project> = projects.iter().filter(|p| p.path != cwd).cloned().collect();
 
     if projects.is_empty() {
         if json {
-            println!("{}", json_projects);
+            println!("[]");
         } else {
             println!("No projects found");
         }
@@ -17,31 +35,26 @@ pub fn list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
         return Ok(());
     }
 
-    for project in projects {
-        let tags_str = if project.tags.is_empty() {
-            String::new()
-        } else {
-            format!(" [{}]", project.tags.join(", "))
-        };
+    if json {
+        let projects: Vec<JSONProject> = projects
+            .iter()
+            .map(|p| JSONProject {
+                name: p.name.clone(),
+                path: p.path.clone(),
+                tags: p.tags.clone(),
+                score: p.frecency(),
+                broken: !p.exists(),
+            })
+            .take(limit)
+            .collect();
 
-        let bare_indicator = if project.is_bare_repo { " (bare)" } else { "" };
-        let broken_indicator = if project.exists() { "" } else { "!" };
-
-        if !json {
-            println!(
-                "{}{}{} - {}{}",
-                broken_indicator,
-                project.name,
-                bare_indicator,
-                project.path.display(),
-                tags_str
-            );
+        let json_projects = serde_json::to_string(&projects)?;
+        println!("{}", json_projects);
+    } else {
+        for project in projects.iter().take(limit) {
+            println!("{}", project.to_list_item());
             continue;
         }
-    }
-
-    if json {
-        println!("{}", json_projects);
     }
 
     Ok(())

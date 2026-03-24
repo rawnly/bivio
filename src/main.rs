@@ -6,12 +6,17 @@ mod shell;
 mod storage;
 mod utils;
 mod version_check;
+use std::io::{stdout, IsTerminal};
 
 use anyhow::Result;
 use clap::Parser;
 use cli::{Cli, Command};
 use project::Project;
 use storage::Storage;
+
+fn is_piped() -> bool {
+    !stdout().is_terminal()
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -21,7 +26,7 @@ async fn main() -> Result<()> {
 
     match cli.command.clone() {
         Command::Add { path, name, tags } => cli::commands::add(path, name, tags),
-        Command::List { tags, json } => cli::commands::list(tags, json),
+        Command::List { tags, json, limit } => cli::commands::list(tags, limit, json),
         Command::Pick { tags, query } => cli::commands::pick(query, tags),
         Command::Remove { name, all, tags } => cli::commands::remove(name, tags, all),
         Command::Tag {
@@ -42,7 +47,7 @@ async fn main() -> Result<()> {
         Command::Init { shell } => cmd_init(shell),
     }?;
 
-    if !matches!(cli.command, Command::CheckUpdate) {
+    if !is_piped() && matches!(cli.command, Command::Pick { .. }) {
         if let Some(latest) = check_process.await?? {
             println!();
             println!("A new update is available: {latest}");
