@@ -24,10 +24,22 @@ async fn main() -> Result<()> {
 
     let check_process = tokio::spawn(async { version_check::is_update_available().await });
 
+    if cli.debug {
+        utils::enable_debug();
+    }
+
     match cli.command.clone() {
         Command::Add { path, name, tags } => cli::commands::add(path, name, tags),
         Command::List { tags, json, limit } => cli::commands::list(tags, limit, json),
-        Command::Pick { tags, query } => cli::commands::pick(query, tags),
+        Command::Pick {
+            tags,
+            query,
+            show_broken,
+        } => cli::commands::pick(cli::commands::PickOptions {
+            query,
+            show_broken,
+            tags,
+        }),
         Command::Remove { name, all, tags } => cli::commands::remove(name, tags, all),
         Command::Tag {
             project,

@@ -15,6 +15,9 @@ pub mod commands;
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
+
+    #[arg(short, long, global = true, default_value_t = false)]
+    pub debug: bool,
 }
 
 #[derive(Subcommand, Clone, EnumIter, strum_macros::Display)]
@@ -55,6 +58,9 @@ pub enum Command {
 
         #[arg(short, long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
+
+        #[arg(long, default_value_t = false)]
+        show_broken: bool,
     },
 
     /// Remove a project (alias: rm)

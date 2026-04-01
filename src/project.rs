@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{fmt, path::PathBuf};
 
+use crate::utils;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
@@ -20,11 +22,7 @@ pub struct Project {
 
 impl fmt::Display for Project {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.is_bare_repo {
-            return write!(f, "{} (bare)", self.name);
-        }
-
-        write!(f, "{}", self.name)
+        write!(f, "{}", self.to_picker_str(utils::is_debug_enabled()))
     }
 }
 
@@ -41,6 +39,20 @@ impl Project {
         }
     }
 
+    pub fn to_picker_str(&self, debug: bool) -> String {
+        let prefix = if debug {
+            format!("[{}] ", self.frecency())
+        } else {
+            String::new()
+        };
+
+        if self.is_bare_repo {
+            return format!("{}{} (bare)", prefix, self.name);
+        }
+
+        format!("{}{}", prefix, self.name)
+    }
+
     pub fn to_list_item(&self) -> String {
         let tags = if self.tags.is_empty() {
             String::new()
@@ -49,9 +61,10 @@ impl Project {
         };
 
         let bare_indicator = if self.is_bare_repo { " (bare)" } else { "" };
+        let broken_indicator = if self.exists() { "" } else { "[BROKEN] " };
 
         format!(
-            "{name}{bare_indicator} — {path}{tags}",
+            "{broken_indicator}{name}{bare_indicator} — {path}{tags}",
             name = self.name,
             path = self.path.display(),
             tags = tags

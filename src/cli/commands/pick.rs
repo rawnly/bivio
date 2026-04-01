@@ -1,15 +1,32 @@
-use crate::{fuzzy_scorer, git, git::Worktree, storage::Storage, Project};
+use crate::{
+    fuzzy_scorer,
+    git::{self, Worktree},
+    storage::Storage,
+    utils, Project,
+};
 use anyhow::Result;
 use inquire::{
     ui::{RenderConfig, Styled},
     Select,
 };
 
-pub fn pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
+pub struct PickOptions {
+    pub query: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub show_broken: bool,
+}
+
+pub fn pick(options: PickOptions) -> Result<()> {
+    let PickOptions {
+        query,
+        show_broken,
+        tags,
+        ..
+    } = options;
     let mut storage = Storage::load()?;
 
     let cwd = std::env::current_dir()?;
-    let projects: Vec<Project> = match tags {
+    let mut projects: Vec<Project> = match tags {
         None => storage
             .list()
             .into_iter()
@@ -30,12 +47,32 @@ pub fn pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     }
 
     if projects.iter().any(|p| !p.exists()) {
+        if !show_broken {
+            projects.retain(|p| p.exists());
+        }
+
         let binary = env!("CARGO_BIN_NAME");
 
         eprintln!("WARN - Some projects points to non-existing path");
-        eprintln!("run `{binary} list` to show broken projects")
+        eprintln!("run `{binary} list` to show broken projects");
+        eprintln!();
+
+        if utils::is_debug_enabled() {
+            let broken_projects: Vec<Project> = projects
+                .clone()
+                .into_iter()
+                .filter(|p| !p.exists())
+                .collect();
+
+            eprintln!("Found {} broken elements:", broken_projects.len());
+            for project in broken_projects {
+                eprintln!("- {}", project.name);
+            }
+            eprintln!();
+        }
     }
 
+    let projects = projects;
     fuzzy_scorer!(fuzzy_project_scorer, Project);
 
     let prompt_project_selection = |projects: &[Project], q: Option<String>| {

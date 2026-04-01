@@ -16,6 +16,18 @@ pub struct JSONProject {
     pub broken: bool,
 }
 
+impl From<&Project> for JSONProject {
+    fn from(p: &Project) -> Self {
+        Self {
+            name: p.name.clone(),
+            path: p.path.clone(),
+            tags: p.tags.clone(),
+            score: p.frecency(),
+            broken: !p.exists(),
+        }
+    }
+}
+
 pub fn list(tags: Option<Vec<String>>, limit: usize, json: bool) -> Result<()> {
     let storage = Storage::load()?;
     let tags = tags.unwrap_or_default();
@@ -37,14 +49,8 @@ pub fn list(tags: Option<Vec<String>>, limit: usize, json: bool) -> Result<()> {
 
     if json {
         let projects: Vec<JSONProject> = projects
-            .iter()
-            .map(|p| JSONProject {
-                name: p.name.clone(),
-                path: p.path.clone(),
-                tags: p.tags.clone(),
-                score: p.frecency(),
-                broken: !p.exists(),
-            })
+            .into_iter()
+            .map(JSONProject::from)
             .take(limit)
             .collect();
 
