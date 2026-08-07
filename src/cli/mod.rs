@@ -49,6 +49,8 @@ pub enum Command {
 
         #[arg(short, long, default_value_t = 8)]
         limit: usize,
+
+        broken: bool,
     },
 
     /// Interactive picker with fuzzy search

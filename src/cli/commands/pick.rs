@@ -34,7 +34,7 @@ pub fn pick(options: PickOptions) -> Result<()> {
             .cloned()
             .collect(),
         Some(tags) => storage
-            .list_filtered(&tags)
+            .list_by_tags(&tags)
             .into_iter()
             .filter(|p| p.path != cwd)
             .cloned()

@@ -4,7 +4,6 @@ use inquire::{Confirm, Select};
 
 pub fn remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Result<()> {
     let mut storage = Storage::load()?;
-
     if all {
         if !Confirm::new("Do you really want to remove all projects?").prompt()? {
             println!("operation aborted by the user.");
@@ -20,7 +19,7 @@ pub fn remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Res
                 return Ok(storage.remove_all()?);
             }
             Some(tags) => {
-                for project in storage.list_filtered(&tags) {
+                for project in storage.list_by_tags(&tags) {
                     println!("Project {} removed", &project.name);
                 }
 

@@ -92,7 +92,7 @@ impl Storage {
         bh.into_vec()
     }
 
-    pub fn list_filtered(&self, tags: &[String]) -> Vec<&Project> {
+    pub fn list_by_tags(&self, tags: &[String]) -> Vec<&Project> {
         if tags.is_empty() {
             self.list()
         } else {

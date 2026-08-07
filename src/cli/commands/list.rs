@@ -28,14 +28,33 @@ impl From<&Project> for JSONProject {
     }
 }
 
-pub fn list(tags: Option<Vec<String>>, limit: usize, json: bool) -> Result<()> {
+pub struct ListOptions {
+    pub limit: usize,
+    pub json: bool,
+    pub tags: Option<Vec<String>>,
+    pub broken: bool,
+}
+
+pub fn list(options: ListOptions) -> Result<()> {
+    let ListOptions {
+        json,
+        limit,
+        tags,
+        broken,
+        ..
+    } = options;
+
     let storage = Storage::load()?;
     let tags = tags.unwrap_or_default();
-    let projects = storage.list_filtered(&tags);
+    let projects = storage.list_by_tags(&tags);
 
     let cwd = std::env::current_dir()?;
 
-    let projects: Vec<&Project> = projects.iter().filter(|p| p.path != cwd).cloned().collect();
+    let mut projects: Vec<&Project> = projects.iter().filter(|p| p.path != cwd).cloned().collect();
+
+    if broken {
+        projects.retain(|p| p.exists() == false);
+    }
 
     if projects.is_empty() {
         if json {

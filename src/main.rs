@@ -14,6 +14,8 @@ use cli::{Cli, Command};
 use project::Project;
 use storage::Storage;
 
+use crate::cli::commands::ListOptions;
+
 fn is_piped() -> bool {
     !stdout().is_terminal()
 }
@@ -30,7 +32,17 @@ async fn main() -> Result<()> {
 
     match cli.command.clone() {
         Command::Add { path, name, tags } => cli::commands::add(path, name, tags),
-        Command::List { tags, json, limit } => cli::commands::list(tags, limit, json),
+        Command::List {
+            tags,
+            json,
+            limit,
+            broken,
+        } => cli::commands::list(ListOptions {
+            tags,
+            json,
+            limit,
+            broken,
+        }),
         Command::Pick {
             tags,
             query,
