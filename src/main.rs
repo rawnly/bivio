@@ -69,6 +69,7 @@ async fn main() -> Result<()> {
             Ok(())
         }
         Command::Init { shell } => cmd_init(shell),
+        Command::Touch { name } => cli::commands::touch(name),
     }?;
 
     if !is_piped() && matches!(cli.command, Command::Pick { .. }) {

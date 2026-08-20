@@ -50,6 +50,8 @@ pub enum Command {
         #[arg(short, long, default_value_t = 8)]
         limit: usize,
 
+        /// Only show projects whose path no longer exists
+        #[arg(long, default_value_t = false)]
         broken: bool,
     },
 
@@ -105,6 +107,14 @@ pub enum Command {
 
     /// Check for new releases
     CheckUpdate,
+
+    /// Bump a project's last-opened timestamp and visit count without prompting.
+    /// Intended for editor/scripting integrations, not for interactive use.
+    #[command(hide = true)]
+    Touch {
+        /// Project name
+        name: String,
+    },
 }
 
 #[derive(Subcommand, Clone, Default)]
