@@ -9,11 +9,48 @@ use inquire::{
     ui::{RenderConfig, Styled},
     Select,
 };
+use serde::Serialize;
+use std::path::Path;
 
 pub struct PickOptions {
     pub query: Option<String>,
     pub tags: Option<Vec<String>>,
     pub show_broken: bool,
+    pub json: bool,
+}
+
+#[derive(Serialize)]
+struct PickResult<'a> {
+    name: &'a str,
+    path: &'a Path,
+    project_path: &'a Path,
+    worktree: Option<PickedWorktree<'a>>,
+}
+
+#[derive(Serialize)]
+struct PickedWorktree<'a> {
+    name: &'a str,
+    branch: Option<&'a str>,
+}
+
+fn format_selection(project: &Project, worktree: Option<&Worktree>, json: bool) -> Result<String> {
+    let path = worktree.map_or(project.path.as_path(), |wt| wt.path.as_path());
+    if !json {
+        return Ok(path.display().to_string());
+    }
+
+    Ok(serde_json::to_string(&PickResult {
+        name: &project.name,
+        path,
+        project_path: &project.path,
+        worktree: worktree.map(|wt| PickedWorktree {
+            name: &wt.name,
+            branch: wt
+                .branch
+                .as_deref()
+                .map(|branch| branch.strip_prefix("refs/heads/").unwrap_or(branch)),
+        }),
+    })?)
 }
 
 pub fn pick(options: PickOptions) -> Result<()> {
@@ -21,7 +58,7 @@ pub fn pick(options: PickOptions) -> Result<()> {
         query,
         show_broken,
         tags,
-        ..
+        json,
     } = options;
     let mut storage = Storage::load()?;
 
@@ -108,9 +145,9 @@ pub fn pick(options: PickOptions) -> Result<()> {
     };
 
     // If bare repo, show available worktrees
-    let final_path = if project.is_bare_repo {
+    let worktree = if project.is_bare_repo {
         match git::list_worktrees(&project.path) {
-            Ok(worktrees) if worktrees.len() == 1 => worktrees.first().unwrap().path.clone(),
+            Ok(worktrees) if worktrees.len() == 1 => worktrees.into_iter().next(),
             Ok(worktrees) if !worktrees.is_empty() => {
                 fuzzy_scorer!(fuzzy_worktree_scorer, Worktree);
 
@@ -120,19 +157,88 @@ pub fn pick(options: PickOptions) -> Result<()> {
                     .with_vim_mode(false);
 
                 match wt_selection.prompt_skippable() {
-                    Ok(Some(selected)) => selected.path.clone(),
+                    Ok(selected) => selected,
                     Err(_) => std::process::exit(1),
-                    _ => project.path.clone(),
                 }
             }
-            _ => project.path.clone(),
+            _ => None,
         }
     } else {
-        project.path.clone()
+        None
     };
 
     storage.update_access(&project.name)?;
-    println!("{}", final_path.display());
+    println!("{}", format_selection(&project, worktree.as_ref(), json)?);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::{json, Value};
+
+    #[test]
+    fn project_output_preserves_name_and_path() {
+        let project = Project::new(
+            "My \"project\"".into(),
+            "/projects/my project".into(),
+            false,
+        );
+        assert_eq!(
+            format_selection(&project, None, false).unwrap(),
+            "/projects/my project"
+        );
+        let result: Value =
+            serde_json::from_str(&format_selection(&project, None, true).unwrap()).unwrap();
+        assert_eq!(
+            result,
+            json!({
+                "name": "My \"project\"",
+                "path": "/projects/my project",
+                "project_path": "/projects/my project",
+                "worktree": null
+            })
+        );
+    }
+
+    #[test]
+    fn worktree_output_keeps_project_identity() {
+        let project = Project::new("bivio".into(), "/projects/bivio.git".into(), true);
+        let mut worktree = Worktree {
+            name: "feature-x".into(),
+            path: "/projects/feature-x".into(),
+            branch: Some("refs/heads/feature/x".into()),
+        };
+        assert_eq!(
+            format_selection(&project, Some(&worktree), false).unwrap(),
+            "/projects/feature-x"
+        );
+        let result: Value =
+            serde_json::from_str(&format_selection(&project, Some(&worktree), true).unwrap())
+                .unwrap();
+        assert_eq!(
+            result,
+            json!({
+                "name": "bivio",
+                "path": "/projects/feature-x",
+                "project_path": "/projects/bivio.git",
+                "worktree": { "name": "feature-x", "branch": "feature/x" }
+            })
+        );
+        worktree.branch = None;
+        let result: Value =
+            serde_json::from_str(&format_selection(&project, Some(&worktree), true).unwrap())
+                .unwrap();
+        assert!(result["worktree"]["branch"].is_null());
+    }
+
+    #[test]
+    fn skipped_worktree_uses_project_root() {
+        let project = Project::new("bivio".into(), "/projects/bivio.git".into(), true);
+        let result: Value =
+            serde_json::from_str(&format_selection(&project, None, true).unwrap()).unwrap();
+        assert_eq!(result["path"], "/projects/bivio.git");
+        assert!(result["worktree"].is_null());
+    }
 }

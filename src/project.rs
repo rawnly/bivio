@@ -71,6 +71,10 @@ impl Project {
         )
     }
 
+    pub fn to_frecency_item(&self) -> String {
+        format!("{}", self.path.display())
+    }
+
     pub fn on_access(&mut self) {
         self.last_opened_at = Utc::now();
         self.visits += 1;

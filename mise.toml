@@ -1,6 +1,8 @@
 [tools]
 goreleaser = "latest"
+mr-boxington = { version = "latest", workflow = "release.yml@refs/heads/main" }
 rust = { version = "latest", profile = "default" }
+rust-analyzer = "latest"
 
 [tasks.install]
 run = "cargo install --path ."

@@ -53,14 +53,12 @@ pub fn list(options: ListOptions) -> Result<()> {
     let mut projects: Vec<&Project> = projects.iter().filter(|p| p.path != cwd).cloned().collect();
 
     if broken {
-        projects.retain(|p| p.exists() == false);
+        projects.retain(|p| !p.exists());
     }
 
     if projects.is_empty() {
         if json {
             println!("[]");
-        } else {
-            println!("No projects found");
         }
 
         return Ok(());
@@ -77,7 +75,7 @@ pub fn list(options: ListOptions) -> Result<()> {
         println!("{}", json_projects);
     } else {
         for project in projects.iter().take(limit) {
-            println!("{}", project.to_list_item());
+            println!("{}", project.to_frecency_item());
             continue;
         }
     }

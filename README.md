@@ -103,6 +103,17 @@ bvo pick my-proj -t rust
 
 For bare repositories, the picker will let you select a specific worktree.
 
+Use `bvo pick --json` to return selection metadata for scripts and integrations:
+
+```json
+{"name":"bivio","path":"/projects/feature-x","project_path":"/projects/bivio.git","worktree":{"name":"feature-x","branch":"feature/x"}}
+```
+
+`path` is the selected directory; `project_path` is the registered project root.
+`worktree` is `null` for a normal project or when worktree selection is skipped.
+Its `branch` is `null` when unavailable, and local branches omit `refs/heads/`.
+Without `--json`, the output remains a single path for existing shell integrations.
+
 ### Managing Tags
 
 ```bash

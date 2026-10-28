@@ -63,6 +63,10 @@ pub enum Command {
 
         #[arg(long, default_value_t = false)]
         show_broken: bool,
+
+        /// Print the selected project and worktree as JSON
+        #[arg(long)]
+        json: bool,
     },
 
     /// Remove a project (alias: rm)

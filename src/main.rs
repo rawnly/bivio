@@ -47,10 +47,12 @@ async fn main() -> Result<()> {
             tags,
             query,
             show_broken,
+            json,
         } => cli::commands::pick(cli::commands::PickOptions {
             query,
             show_broken,
             tags,
+            json,
         }),
         Command::Remove { name, all, tags } => cli::commands::remove(name, tags, all),
         Command::Tag {
@@ -71,7 +73,7 @@ async fn main() -> Result<()> {
         Command::Init { shell } => cmd_init(shell),
     }?;
 
-    if !is_piped() && matches!(cli.command, Command::Pick { .. }) {
+    if !is_piped() && matches!(cli.command, Command::Pick { json: false, .. }) {
         if let Some(latest) = check_process.await?? {
             println!();
             println!("A new update is available: {latest}");
