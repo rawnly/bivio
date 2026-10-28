@@ -14,6 +14,17 @@ This tool adheres to the [smol contract](https://bower.sh/smol-contract)
 - **Shell Integration** - Generate shell hooks for seamless navigation
 - **Cross-Platform** - Works on macOS, Linux, and Windows
 
+## Releases
+
+Push a `v`-prefixed tag matching the version in `Cargo.toml` (for example,
+`v0.2.0`) to build and publish a GitHub release. The workflow builds Linux
+x86-64, macOS x86-64 and ARM64, and Windows x86-64 archives. It publishes a
+signed packslip manifest alongside them; the release remains a draft until
+signing succeeds. Prerelease tags must also match the Cargo version.
+
+Install a published release with `packslip install github.com/rawnly/bivio`.
+The release workflow does not currently update the Homebrew tap.
+
 ## Building from Source
 
 ### Prerequisites
